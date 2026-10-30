@@ -143,7 +143,7 @@ function App() {
     try {
       await request<{ document: DocumentItem }>('/api/documents/text', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: JSON.stringify(sampleDocument),
       })
       await refreshDocuments()
@@ -190,7 +190,7 @@ function App() {
     try {
       const result = await request<ChatResult>('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: JSON.stringify({ question: trimmed }),
       })
       setLatestResult(result)
