@@ -2,7 +2,7 @@ package org.playground;
 
 import org.chunk.TextSplitter;
 import org.chunk.TextSplitterFactory;
-import org.demo.local.HashingEmbeddingService;
+import org.demo.local.CjkAwareHashingEmbeddingService;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.service.LLM.ChatService;
@@ -41,7 +41,7 @@ public final class PlaygroundEngine {
 
     public PlaygroundEngine(ChatService chatService, String chatUrl, String model, String mode, int topK) {
         // textSplitter 传 null 表示按文档语言自动选择（中文走中文分块器，其余走定长分块）
-        this(null, new HashingEmbeddingService(), chatService, chatUrl, model, mode, topK);
+        this(null, new CjkAwareHashingEmbeddingService(), chatService, chatUrl, model, mode, topK);
     }
 
     PlaygroundEngine(
