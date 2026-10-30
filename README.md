@@ -49,6 +49,10 @@ Upload documents, ask grounded questions, and inspect the exact passages behind 
 - 分块不改变命中率，但决定证据可读性：整句结束率 50% → 100%
 - 完整报告与复现命令：[docs/eval-report.md](docs/eval-report.md)
 
+![中文问答与检索证据](docs/assets/zh-demo.png)
+
+上图：上传中文文档后提问，右侧检索证据为完整句子，相似度 32%（改动前约 12%）。
+
 ### 测试
 
 ```bash
