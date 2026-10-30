@@ -112,6 +112,12 @@ public final class PlaygroundServer extends NanoHTTPD {
         if (isBlank(body)) {
             throw new IllegalArgumentException("JSON request body is required");
         }
+        // 客户端未声明 charset 时，服务端会按非 UTF-8 解码，中文会变成替换字符。
+        // 这里给出可操作的错误提示，而不是让下游报“没有可嵌入的 token”。
+        if (body.indexOf('\uFFFD') >= 0) {
+            throw new IllegalArgumentException(
+                    "request body must be UTF-8; send Content-Type: application/json; charset=utf-8");
+        }
         return new JSONObject(body);
     }
 
