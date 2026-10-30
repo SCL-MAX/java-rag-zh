@@ -7,14 +7,55 @@
 
 Upload documents, ask grounded questions, and inspect the exact passages behind every answer.
 
-[![Java-RAG CI](https://github.com/ChinaYiqun/java-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/ChinaYiqun/java-rag/actions/workflows/ci.yml)
+[![Java-RAG CI](https://github.com/SCL-MAX/springboot-langchain4j-rag-knowledgebase/actions/workflows/ci.yml/badge.svg)](https://github.com/SCL-MAX/springboot-langchain4j-rag-knowledgebase/actions/workflows/ci.yml)
 [![Java 8+](https://img.shields.io/badge/Java-8%2B-ED8B00?logo=openjdk&logoColor=white)](https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=06131f)](frontend)
-[![License](https://img.shields.io/github/license/ChinaYiqun/java-rag)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/ChinaYiqun/java-rag?style=social)](https://github.com/ChinaYiqun/java-rag/stargazers)
+[![License](https://img.shields.io/github/license/SCL-MAX/springboot-langchain4j-rag-knowledgebase)](LICENSE)
 
 [English](README.md) · [简体中文](README_ch.md) · [Playground](docs/PLAYGROUND.md) · [Architecture](docs/ARCHITECTURE.md) · [Contributing](CONTRIBUTING.md)
 </div>
+
+---
+
+## 二次开发说明：中文检索增强
+
+> 本仓库 fork 自 [ChinaYiqun/java-rag](https://github.com/ChinaYiqun/java-rag)。
+> 上游是一套无框架的纯 Java RAG 工具箱，但对中文场景基本不可用：
+> 分块按固定字符数硬切、哈希向量对中文退化为字符匹配、中文提问会直接返回 500。
+> 本仓库在保留原有架构与接口设计的前提下，补齐了这几处缺陷。
+
+### 改动清单
+
+| # | 问题 | 改动 | 主要文件 |
+|---|---|---|---|
+| 1 | 中文句子被拦腰截断 | 句级分块：切句 → 按长度合并 → 相邻块重叠 | `org/chunk/ChineseTextSplitter.java` |
+| 2 | 分块策略写死会让英文文档变差 | 按中文字符占比自动选择策略 | `org/chunk/TextSplitterFactory.java` |
+| 3 | 中文提问返回 500 `input does not contain embeddable tokens` | 前端补 `charset=utf-8`；服务端对错误编码返回明确提示 | `frontend/src/App.tsx`、`PlaygroundServer.java` |
+| 4 | 哈希向量对中文退化为三元组匹配 | 中文按「单字 + 相邻二字」建特征 | `org/demo/local/CjkAwareHashingEmbeddingService.java` |
+| 5 | JDK 21 下 `mvn` 编译失败 | Lombok 1.18.10 → 1.18.34 | `pom.xml` |
+
+### 评测结果
+
+5 篇中文文档、10 道问题，两种分块 × 两种向量的消融对比（Top-K=3，块大小统一 120 字符）：
+
+| 分块策略 | 向量策略 | Hit@1 | Hit@3 | 整句结束率 |
+|---|---|---|---|---|
+| FixedSize(120) | Hashing（上游实现） | 4/10 | 8/10 | 50% |
+| FixedSize(120) | CJK-bigram（本仓库） | **7/10** | **10/10** | 50% |
+| ChineseSplitter(120,20) | Hashing（上游实现） | 4/10 | 7/10 | **100%** |
+| ChineseSplitter(120,20) | CJK-bigram（本仓库） | **7/10** | **10/10** | **100%** |
+
+- 中文向量是主要瓶颈：Hit@3 从 8/10 提升到 10/10，Hit@1 从 4/10 提升到 7/10
+- 分块不改变命中率，但决定证据可读性：整句结束率 50% → 100%
+- 完整报告与复现命令：[docs/eval-report.md](docs/eval-report.md)
+
+### 测试
+
+```bash
+mvn test        # 22 个测试，含新增的分块、工厂、中文向量测试
+```
+
+中文样例文档：[docs/samples/java-rag-guide-zh.md](docs/samples/java-rag-guide-zh.md)
 
 ---
 
