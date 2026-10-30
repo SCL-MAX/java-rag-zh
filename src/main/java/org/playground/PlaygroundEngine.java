@@ -1,7 +1,7 @@
 package org.playground;
 
-import org.chunk.FixedSizeSplitter;
 import org.chunk.TextSplitter;
+import org.chunk.TextSplitterFactory;
 import org.demo.local.HashingEmbeddingService;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -40,7 +40,8 @@ public final class PlaygroundEngine {
     private final Map<String, StoredDocument> documents = new LinkedHashMap<>();
 
     public PlaygroundEngine(ChatService chatService, String chatUrl, String model, String mode, int topK) {
-        this(new FixedSizeSplitter(700), new HashingEmbeddingService(), chatService, chatUrl, model, mode, topK);
+        // textSplitter 传 null 表示按文档语言自动选择（中文走中文分块器，其余走定长分块）
+        this(null, new HashingEmbeddingService(), chatService, chatUrl, model, mode, topK);
     }
 
     PlaygroundEngine(
@@ -52,7 +53,7 @@ public final class PlaygroundEngine {
             String mode,
             int topK
     ) {
-        if (textSplitter == null || embeddingService == null || chatService == null) {
+        if (embeddingService == null || chatService == null) {
             throw new IllegalArgumentException("playground dependencies cannot be null");
         }
         if (topK <= 0) {
@@ -75,7 +76,8 @@ public final class PlaygroundEngine {
             throw new IllegalArgumentException("document contains no text");
         }
 
-        List<String> split = textSplitter.split(text);
+        TextSplitter splitter = textSplitter != null ? textSplitter : TextSplitterFactory.forText(text);
+        List<String> split = splitter.split(text);
         List<String> nonBlank = new ArrayList<>();
         for (String chunk : split) {
             if (!isBlank(chunk)) {
